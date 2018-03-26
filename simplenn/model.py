@@ -12,10 +12,12 @@ class Model(object):
         self.SetSolver(solver)
         self.cost = None
         self.epochsTrained = 0
+        self.training = True
 
     def Reset(self):
         self.cost = None
         self.epochsTrained = 0
+        self.training = True
         for layer in self.Layers:
             layer.Reset()
         self.Loss.Reset()
@@ -23,6 +25,8 @@ class Model(object):
 
     def SetLayers(self, layers):
         self.Layers = [LAYER[layer[0]](*layer[1:]) if isinstance(layer, (list, tuple)) else layer for layer in layers]
+        for layer in self.Layers:
+            layer.Model = self
 
     def SetLoss(self, loss):
         self.Loss = LOSS[loss[0]](*loss[1:]) if isinstance(loss, (list, tuple)) else loss
@@ -39,6 +43,18 @@ class Model(object):
     def GetSolver(self):
         return self.Solver
 
+    # --------------------------------------
+    def Forward(self, x):
+        cache = [x]
+        for layer in self.Layers:
+            cache.append(layer.Forward(cache[-1]))
+        return cache
+
+    def Backward(self, cache, grad):
+        for dataIn, dataOut, layer in zip(reversed(cache[:-1]), reversed(cache[1:]), reversed(self.Layers)):
+            grad = layer.Backward(dataIn, dataOut, grad)
+
+    # --------------------------------------
     def TrainStep(self, x, y):
         cache = self.Forward(x)
         self.cost, grad = self.Loss(y, cache[-1])
@@ -58,7 +74,16 @@ class Model(object):
         for step in range(1000):
             self.TrainStep(x, y)
 
+    # --------------------------------------
+    def SetTrainMode(self):
+        self.training = True
+
+    def SetTestMode(self):
+        self.training = False
+
     def Train(self, x, y, steps=100, showCost=1):
+        if not self.training:
+            self.training = True
         template = "Epoch: %{}d, Cost: %.6f".format(len(str(steps)))
         if showCost:
             for step in range(steps):
@@ -72,19 +97,11 @@ class Model(object):
                 self.TrainStep(x, y)
 
     def Predict(self, x, prob=False):
+        if self.training:
+            self.training = False
         for layer in self.Layers:
             x = layer.Forward(x)
         if prob:
             return x
         else:
             return self.Layers[-1].Predict(x)
-
-    def Forward(self, x):
-        cache = [x]
-        for layer in self.Layers:
-            cache.append(layer.Forward(cache[-1]))
-        return cache
-
-    def Backward(self, cache, grad):
-        for dataIn, dataOut, layer in zip(reversed(cache[:-1]), reversed(cache[1:]), reversed(self.Layers)):
-            grad = layer.Backward(dataIn, dataOut, grad)

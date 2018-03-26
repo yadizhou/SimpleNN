@@ -28,6 +28,7 @@ class Layer(object):
         self.cache = None
         # self.input = None
         # self.output = None
+        self.Model = None
         if self.LEARNABLE:
             self.init = [i[3] for i in self.WEIGHT] if init is None else ExpectTupleInTuple(init, len(self.WEIGHT))
             self.lr = ExpectTuple(lr, len(self.WEIGHT))
@@ -48,7 +49,7 @@ class Layer(object):
         # self.output = None
 
 
-# Linear
+# ========================== Linear ========================== #
 class Linear(Layer):
     LEARNABLE = True
     WEIGHT = ("W", "dW", DECAY_Y, "XAVIER_UNIFORM"), \
@@ -75,7 +76,7 @@ class Linear(Layer):
         return dataOut.argmax(1).reshape(-1, 1)
 
 
-# Non-linear
+# ======================== Non-linear ======================== #
 class ReLU(Layer):
     def Forward(self, dataIn):
         return np.maximum(0, dataIn)
@@ -128,7 +129,7 @@ class LogSoftmax(Layer):
         return dataOut.argmax(1).reshape(-1, 1)
 
 
-# Reshape
+# ========================= Reshape ========================== #
 class Reshape(Layer):
     def __init__(self, shape):
         super().__init__()
@@ -142,9 +143,9 @@ class Reshape(Layer):
         return gradIn.reshape(self.cache)
 
 
-# Convolution
-# Adapted from https://wiseodd.github.io/techblog/2016/07/16/convnet-conv-layer/
-# Extremely slow
+# ======================= Convolution ======================== #
+# https://wiseodd.github.io/techblog/2016/07/16/convnet-conv-layer/
+# Very slow
 class Conv2d(Layer):
     LEARNABLE = True
     WEIGHT = ("W", "dW", True, "XAVIER_UNIFORM"), \
@@ -188,7 +189,7 @@ class Conv2d(Layer):
         return back
 
 
-# Pooling
+# ========================= Pooling ========================== #
 class MaxPooling2d(Layer):
     def __init__(self, field=2, stride=2):
         super().__init__()
@@ -219,6 +220,27 @@ class MaxPooling2d(Layer):
         return dX
 
 
+# ========================= Dropout ========================== #
+class Dropout(Layer):
+    def __init__(self, p=0.5):
+        super().__init__()
+        self.p = p
+
+    def Forward(self, dataIn):
+        if self.Model is None or self.Model.training:
+            self.cache = (np.random.rand(*dataIn.shape) < self.p) / self.p
+            return dataIn * self.cache
+        else:
+            self.cache = None
+            return dataIn
+
+    def Backward(self, dataIn, dataOut, gradIn):
+        if self.Model is None or self.Model.training:
+            return gradIn * self.cache
+        else:
+            return gradIn
+
+
 # ==============================================================================
 LAYER = {
     "LINEAR"        : Linear,
@@ -232,6 +254,8 @@ LAYER = {
     "RESHAPE"       : Reshape,
     "CONV_2D"       : Conv2d,
     "MAX_POOLING_2D": MaxPooling2d,
+
+    "DROPOUT"       : Dropout,
 
 }
 
