@@ -36,7 +36,7 @@ class BCE(Loss):
         return -np.sum(y * np.log(h) + (1 - y) * np.log1p(-h)) / y.shape[0]
 
     def Backward(self, y, h):
-        return (h - y) / y.shape[0]
+        return (h - y) / (1 - h) / h / y.shape[0]
 
 
 class CE(Loss):  # Takes output from Linear layer, not Softmax layer

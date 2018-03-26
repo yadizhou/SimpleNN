@@ -69,7 +69,7 @@ class Linear(Layer):
 
     def Backward(self, dataIn, dataOut, gradIn):
         self.dW = dataIn.T @ gradIn
-        self.db = gradIn.mean(axis=0)
+        self.db = gradIn.sum(axis=0)
         return gradIn @ self.W.T
 
     def Predict(self, dataOut):
@@ -256,6 +256,7 @@ LAYER = {
     "MAX_POOLING_2D": MaxPooling2d,
 
     "DROPOUT"       : Dropout,
+    # "BATCH_NORM"    : BatchNorm,
 
 }
 
