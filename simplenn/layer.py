@@ -241,6 +241,50 @@ class Dropout(Layer):
             return gradIn
 
 
+# ======================== BatchNorm ========================= #
+class BatchNorm(Layer):
+    LEARNABLE = True
+    WEIGHT = ("g", "dg", DECAY_N, 1), \
+             ("b", "db", DECAY_N, 0)
+
+    def __init__(self, nIn, eps=1e-8, momentum=0.9):
+        super().__init__()
+        self.D = nIn
+        self.eps = eps
+        self.momentum = momentum
+        self.g = Initialize((nIn,), self.init[0])
+        self.b = Initialize((nIn,), self.init[1])
+        self.dg = None
+        self.db = None
+        self.cache = {"runM": np.zeros(self.D), "runV": np.zeros(self.D), "----": None}
+
+    def Reset(self):
+        self.cache = {"runM": np.zeros(self.D), "runV": np.zeros(self.D), "----": None}
+
+    def Forward(self, dataIn):
+        if self.Model is None or self.Model.training:
+            m = dataIn.mean(axis=0)
+            v = dataIn.var(axis=0)
+            v_eps = v + self.eps
+            std = np.sqrt(v_eps)
+            x_mu = dataIn - m
+            x_norm = x_mu / std
+            self.cache["runM"] = self.momentum * self.cache["runM"] + (1.0 - self.momentum) * m
+            self.cache["runV"] = self.momentum * self.cache["runV"] + (1.0 - self.momentum) * v
+            self.cache["----"] = (m, v, v_eps, std, x_mu, x_norm)
+            return self.g * x_norm + self.b
+        else:
+            return self.g * (dataIn - self.cache["runM"]) / np.sqrt(self.cache["runV"] + self.eps) + self.b
+
+    def Backward(self, dataIn, dataOut, gradIn):
+        m, v, v_eps, std, x_mu, x_norm = self.cache["----"]
+        self.dg = np.sum(gradIn * x_norm, axis=0)
+        self.db = np.sum(gradIn, axis=0)
+        N, D = dataIn.shape
+        gradOut = (self.g / N) / std * (N * gradIn - np.sum(gradIn, axis=0) - x_mu / v_eps * np.sum(gradIn * x_mu, axis=0))
+        return gradOut
+
+
 # ==============================================================================
 LAYER = {
     "LINEAR"        : Linear,
@@ -256,7 +300,7 @@ LAYER = {
     "MAX_POOLING_2D": MaxPooling2d,
 
     "DROPOUT"       : Dropout,
-    # "BATCH_NORM"    : BatchNorm,
+    "BATCH_NORM"    : BatchNorm,
 
 }
 
