@@ -1,5 +1,17 @@
 # -*- coding: utf-8 -*-
 
+# Epoch:     0, Cost: 1.116698
+# Epoch:  1000, Cost: 0.068308
+# Epoch:  2000, Cost: 0.041813
+# Epoch:  3000, Cost: 0.032390
+# Epoch:  4000, Cost: 0.027661
+# Epoch:  5000, Cost: 0.024789
+# Epoch:  6000, Cost: 0.022837
+# Epoch:  7000, Cost: 0.021408
+# Epoch:  8000, Cost: 0.020304
+# Epoch:  9000, Cost: 0.019416
+# Epoch: 10000, Cost: 0.018671
+
 import numpy as np
 from toydata import load_spiral_dataset, plot_decision_boundary
 

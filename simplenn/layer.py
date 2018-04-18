@@ -25,10 +25,8 @@ class Layer(object):
         return super().__new__(cls)
 
     def __init__(self, init=None, lr=None, decay=None):
-        self.cache = None
-        # self.input = None
-        # self.output = None
         self.Model = None
+        self.cache = None
         if self.LEARNABLE:
             self.init = [i[3] for i in self.WEIGHT] if init is None else ExpectTupleInTuple(init, len(self.WEIGHT))
             self.lr = ExpectTuple(lr, len(self.WEIGHT))
@@ -45,8 +43,6 @@ class Layer(object):
 
     def Reset(self):
         self.cache = None
-        # self.input = None
-        # self.output = None
 
 
 # ========================== Linear ========================== #
@@ -247,8 +243,8 @@ class BatchNorm(Layer):
     WEIGHT = ("g", "dg", DECAY_N, 1), \
              ("b", "db", DECAY_N, 0)
 
-    def __init__(self, nIn, eps=1e-8, momentum=0.9):
-        super().__init__()
+    def __init__(self, nIn, eps=1e-8, momentum=0.9, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.D = nIn
         self.eps = eps
         self.momentum = momentum
@@ -283,6 +279,39 @@ class BatchNorm(Layer):
         N, D = dataIn.shape
         gradOut = (self.g / N) / std * (N * gradIn - np.sum(gradIn, axis=0) - x_mu / v_eps * np.sum(gradIn * x_mu, axis=0))
         return gradOut
+
+
+# =========================== RNN ============================ #
+class RNN(Layer):
+    LEARNABLE = True
+    WEIGHT = ("wi", "dwi", DECAY_Y, "XAVIER_UNIFORM"), \
+             ("bi", "dbi", DECAY_N, 0), \
+             ("wh", "dwh", DECAY_Y, "XAVIER_UNIFORM"), \
+             ("bh", "dbh", DECAY_N, 0),
+
+    def __init__(self, nIn, nOut, nLayer, func="tanh", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.nIn = nIn
+        self.nOut = nOut
+        self.nLayer = nLayer
+        self.func = func
+        # self.wi = Initialize((,), self.init[0])
+        # self.bi = Initialize((,), self.init[1])
+        # self.wh = Initialize((,), self.init[2])
+        # self.bh = Initialize((,), self.init[3])
+        self.dwi = self.dbi = self.dwh = self.dbh = None
+
+    def Forward(self, dataIn):
+        pass
+
+    def Backward(self, dataIn, dataOut, gradIn):
+        pass
+
+
+# =========================== LSTM =========================== #
+
+
+# =========================== GRU ============================ #
 
 
 # ==============================================================================

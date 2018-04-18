@@ -7,7 +7,7 @@ from .utils import PrepareModule
 # ==============================================================================
 class Loss(object):
     def __init__(self):
-        pass
+        self.Model = None
 
     def __call__(self, y, h):
         return self.Forward(y, h), self.Backward(y, h)

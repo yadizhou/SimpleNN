@@ -1,5 +1,17 @@
 # -*- coding: utf-8 -*-
 
+# Epoch:     0, Cost: 0.716379
+# Epoch:  1000, Cost: 0.049936
+# Epoch:  2000, Cost: 0.026283
+# Epoch:  3000, Cost: 0.019794
+# Epoch:  4000, Cost: 0.016638
+# Epoch:  5000, Cost: 0.014784
+# Epoch:  6000, Cost: 0.013544
+# Epoch:  7000, Cost: 0.012666
+# Epoch:  8000, Cost: 0.012020
+# Epoch:  9000, Cost: 0.011491
+# Epoch: 10000, Cost: 0.011079
+
 import numpy as np
 from toydata import load_spiral_dataset, plot_decision_boundary
 
@@ -24,7 +36,8 @@ model = Model(
         ("SIGMOID",)
     ],
     loss=("BCE",),
-    solver=("SGD", learning_rate, decay))
+    solver=("MOMENTUM", learning_rate, 0.5, decay))
+    # solver=("SGD", learning_rate, decay))
 
 ## Alternatively,
 # from simplenn.layer import Linear, ReLU, Sigmoid

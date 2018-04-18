@@ -30,9 +30,11 @@ class Model(object):
 
     def SetLoss(self, loss):
         self.Loss = LOSS[loss[0]](*loss[1:]) if isinstance(loss, (list, tuple)) else loss
+        self.Loss.Model = self
 
     def SetSolver(self, solver):
         self.Solver = SOLVER[solver[0]](*solver[1:]) if isinstance(solver, (list, tuple)) else solver
+        self.Solver.Model = self
 
     def GetLayers(self):
         return self.Layers
